@@ -63,7 +63,7 @@ namespace CBakWeChatDesktop.Helpers
         {
             var content = new FormUrlEncodedContent(data);
 
-            HttpResponseMessage response = await client.PostAsync(GetServer() + path, content);
+            HttpResponseMessage response = await client.PostAsync(path, content);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();
         }

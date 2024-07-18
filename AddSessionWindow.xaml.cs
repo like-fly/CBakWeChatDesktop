@@ -12,6 +12,10 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using CBakWeChatDesktop.helper.form;
+using Newtonsoft.Json.Linq;
+using log4net;
+using CBakWeChatDesktop.Model;
 
 namespace CBakWeChatDesktop
 {
@@ -21,38 +25,62 @@ namespace CBakWeChatDesktop
     public partial class AddSessionWindow : Window
     {
         private MainWindow mainWindow;
-        private SessionFormData sessionFormData;
+        private Session session;
         public AddSessionWindow(MainWindow mainWindow, WeChatMsg weChatMsg)
         {
             InitializeComponent();
-            this.sessionFormData = new SessionFormData();
+            this.session = new Session();
             this.mainWindow = mainWindow;
-            bindData(weChatMsg);
+            BindData(weChatMsg);
         }
 
-        private void bindData(WeChatMsg msg)
+        private void BindData(WeChatMsg msg)
         {
-            this.sessionFormData.wx_name = msg.name;
-            this.sessionFormData.wx_acct_name = msg.accountname;
-            this.sessionFormData.wx_key = msg.key;
-            this.sessionFormData.wx_id = msg.wxid;
-            this.sessionFormData.wx_mobile = msg.mobile;
-            this.sessionFormData.wx_email = msg.mail;
-            this.sessionFormData.pid = msg.pid;
-            DataContext = this.sessionFormData;
+            this.session.wx_name = msg.name;
+            this.session.wx_acct_name = msg.accountname;
+            this.session.wx_key = msg.key;
+            this.session.wx_id = msg.wxid;
+            this.session.wx_mobile = msg.mobile;
+            this.session.wx_email = msg.mail;
+            this.session.pid = msg.pid;
+            DataContext = this.session;
+        }
+
+
+        private void CloseDialog(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+
+        private async void ClickAddSession(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                this.session.name = this.sessionNameTextBox.Text;
+                this.session.desc = this.sessionDescTextBox.Text;
+                JObject response = await ApiHelpers.AddSession(this.session);
+                this.session.id = (int)response["id"];
+                MessageBox.Show(response["id"].ToString(), "调试");
+                // 添加到 Main 中显示
+                mainWindow.SessionAdd(this.session);
+                this.Close();
+            } catch (Exception ex)
+            {
+                var serverError = ex.Data["ResponseBody"];
+                if (serverError != null)
+                {
+                    var responseBody = serverError.ToString();
+                    var jsonResponse = JObject.Parse(responseBody);
+                    MessageBox.Show($"添加失败: {jsonResponse["detail"].ToString()}", "添加 session 失败");
+                }
+                else
+                {
+                    MessageBox.Show($"添加失败: {ex.Message}", "添加 session 失败");
+                }
+            }
+            
         }
     }
 
-    class SessionFormData
-    {
-        public string name { get; set; }
-        public string desc { get; set; }
-        public string wx_id { get; set; }
-        public string wx_name { get; set; }
-        public string wx_acct_name { get; set; }
-        public string wx_key { get; set; }
-        public string wx_mobile { get; set; }
-        public string wx_email { get; set; }
-        public string pid { get; set; }
-    }
+    
 }

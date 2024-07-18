@@ -1,52 +1,56 @@
-﻿using CBakWeChatDesktop.Helpers;
+﻿using CBakWeChatDesktop.helper.form;
+using CBakWeChatDesktop.Helpers;
+using CBakWeChatDesktop.login;
+using CBakWeChatDesktop.ViewModel;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
+using System.Net;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using CBakWeChatDesktop.Model;
 
 namespace CBakWeChatDesktop
 {
     public partial class MainWindow : Window
     {
-        MainData data = new MainData();
-        public List<Student> Students { get; set; }
+        MainViewModel viewModel = new MainViewModel();
 
         public MainWindow()
         {
             InitializeComponent();
+            // 加载sessions数据
+            LoadSessions();
             // 数据绑定
-            bindData();
-            LoadStudents();
-            StudentList.ItemsSource = Students;
+            DataContext = viewModel;
         }
 
-        private void bindData()
+
+        private void LoadSessions()
         {
-            data.server = Properties.Settings.Default.server;
-            data.token = Properties.Settings.Default.token;
-            data.isLogin = Properties.Settings.Default.isLogin;
-            DataContext = data;
+            viewModel.Sessions = new ObservableCollection<Session>();
+
+            var session = new Session();
+            session.id = 1;
+            session.name = "s1";
+            session.desc = "s1";
+            session.wx_id = "s1_wx_id";
+            session.wx_name = "s1_wx_name";
+            session.wx_acct_name = "s1_wx_acct_name";
+            session.wx_key = "s1_wx_key";
+            session.wx_mobile = "s1_wx_mobile";
+
+            viewModel.Sessions.Add(session);
+            this.SessionList.ItemsSource = viewModel.Sessions;
         }
 
-        private void LoadStudents()
+        private void SessionList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Students = new List<Student>
+            if (SessionList.SelectedItem is Session selectedSession)
             {
-                new Student { Name = "John Doe", Age = 20, Grade = "A", Address = "123 Main St" },
-                new Student { Name = "Jane Smith", Age = 22, Grade = "B", Address = "456 Oak St" },
-                new Student { Name = "Sam Johnson", Age = 19, Grade = "A", Address = "789 Pine St" }
-            };
-        }
-
-        private void StudentList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (StudentList.SelectedItem is Student selectedStudent)
-            {
-                StudentName.Text = selectedStudent.Name;
-                StudentAge.Text = selectedStudent.Age.ToString();
-                StudentGrade.Text = selectedStudent.Grade;
-                StudentAddress.Text = selectedStudent.Address;
+                StudentName.Text = selectedSession.name;
             }
             else
             {
@@ -60,25 +64,25 @@ namespace CBakWeChatDesktop
         private void SessionAddClick(object sender, RoutedEventArgs e)
         {
             var msg = WeChatMsgScan.ReadProcess();
-            MessageBox.Show(msg.accountname);
             AddSessionWindow addSessionWindow = new AddSessionWindow(this, msg);
             addSessionWindow.ShowDialog();
         }
+
+        public void SessionAdd(Session session)
+        {
+            viewModel.Sessions.Add(session);
+        }
+
+        private void Logout(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.isLogin = false;
+            Properties.Settings.Default.Save();
+            LoginWindow loginWindow = new LoginWindow();
+            loginWindow.Show();
+            // 关闭主窗体
+            this.Close();
+        }
     }
 
-    public class MainData
-    {
-        public string server { get; set; }
-        public string token { get; set; }
-        public bool isLogin { get; set; }
-    }
-
-    public class Student
-    {
-        public string Name { get; set; }
-        public int Age { get; set; }
-        public string Grade { get; set; }
-        public string Address { get; set; }
-    }
 
 }
