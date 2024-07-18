@@ -1,0 +1,28 @@
+﻿<Window x:Class="CBakWeChatDesktop.AddSessionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CBakWeChatDesktop"
+        mc:Ignorable="d"
+        Title="添加 Session" Height="450" Width="500">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+        <Button Content="添加" HorizontalAlignment="Left" Margin="444,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="40" Height="23"/>
+        <Button Content="取消" HorizontalAlignment="Left" Margin="399,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="40" Height="23"/>
+        <Label Content="用户名：" HorizontalAlignment="Left" Margin="147,92,0,0" VerticalAlignment="Top"/>
+        <Label Content="账户名：" HorizontalAlignment="Left" Margin="147,122,0,0" VerticalAlignment="Top"/>
+        <Label Content="进   程：" HorizontalAlignment="Left" Margin="147,62,0,0" VerticalAlignment="Top"/>
+        <Label Content="Session名：" HorizontalAlignment="Left" Margin="127,152,0,0" VerticalAlignment="Top"/>
+        <Label Content="描   述：" HorizontalAlignment="Left" Margin="147,182,0,0" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="220,67,0,0" TextWrapping="Wrap" Text="{Binding pid}" VerticalAlignment="Top" RenderTransformOrigin="0.305,0.118" Width="178"/>
+        <TextBlock HorizontalAlignment="Left" Margin="220,97,0,0" TextWrapping="Wrap" Text="{Binding wx_name}" VerticalAlignment="Top" RenderTransformOrigin="0.305,0.118" Width="178"/>
+        <TextBlock HorizontalAlignment="Left" Margin="220,127,0,0" TextWrapping="Wrap" Text="{Binding wx_acct_name}" VerticalAlignment="Top" RenderTransformOrigin="0.305,0.118" Width="178"/>
+        <TextBlock HorizontalAlignment="Left" Margin="220,157,0,0" TextWrapping="Wrap" Text="{Binding name}" VerticalAlignment="Top" RenderTransformOrigin="0.305,0.118" Width="178"/>
+        <TextBlock HorizontalAlignment="Left" Margin="220,187,0,0" TextWrapping="Wrap" Text="{Binding desc}" VerticalAlignment="Top" RenderTransformOrigin="0.305,0.118" Width="178"/>
+
+    </Grid>
+</Window>
