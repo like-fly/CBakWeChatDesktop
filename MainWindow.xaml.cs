@@ -70,7 +70,7 @@ namespace CBakWeChatDesktop
 
         public void SessionAdd(Session session)
         {
-            viewModel.Sessions.Add(session);
+            viewModel.Sessions?.Add(session);
         }
 
         private void Logout(object sender, RoutedEventArgs e)

@@ -22,6 +22,7 @@ namespace CBakWeChatDesktop.Helpers
         public string sessionid;
     }
 
+
     public class WeChatMsgScan
     {
 
@@ -75,7 +76,8 @@ namespace CBakWeChatDesktop.Helpers
             }
             // 获取信息
             Int64 WeChatKey = (Int64)WeChatMsgScan.WeChatWinBaseAddress + SupportList[4];
-            string HexKey = WeChatMsgScan.GetHex(WeChatProcess.Handle, (IntPtr)WeChatKey);
+            // string HexKey = WeChatMsgScan.GetHex(WeChatProcess.Handle, (IntPtr)WeChatKey);
+            string HexKey = GetKey(WeChatProcess, WeChatMsgScan.WeChatWinBaseAddress, SupportList[4]);
             log.Info($"weixin hex key is {HexKey}");
             if (!string.IsNullOrWhiteSpace(HexKey))
             {
@@ -83,18 +85,18 @@ namespace CBakWeChatDesktop.Helpers
             }
 
             Int64 WeChatName = (Int64)WeChatMsgScan.WeChatWinBaseAddress + SupportList[0];
-            string name = WeChatMsgScan.GetName(WeChatProcess.Handle, (IntPtr)WeChatName, 100);
+            string name = WeChatMsgScan.GetName(WeChatProcess, (IntPtr)WeChatName, 100);
             WeChatMsg.name = name;
             log.Info($"weixin user name is {name}");
             Int64 WeChatAccount = (Int64)WeChatMsgScan.WeChatWinBaseAddress + SupportList[1];
-            string Account = WeChatMsgScan.GetMobile(WeChatProcess.Handle, (IntPtr)WeChatAccount);
+            string Account = WeChatMsgScan.GetMobile(WeChatProcess, (IntPtr)WeChatAccount);
             log.Info($"weixin account is {Account}");
             if (!string.IsNullOrWhiteSpace(Account))
             {
                 WeChatMsg.accountname = Account;
             }
             Int64 WeChatMobile = (Int64)WeChatMsgScan.WeChatWinBaseAddress + SupportList[2];
-            string Mobile = WeChatMsgScan.GetMobile(WeChatProcess.Handle, (IntPtr)WeChatMobile);
+            string Mobile = WeChatMsgScan.GetMobile(WeChatProcess, (IntPtr)WeChatMobile);
             log.Info($"weixin mobile is {Mobile}");
             if (!string.IsNullOrWhiteSpace(Mobile))
             {
@@ -102,7 +104,7 @@ namespace CBakWeChatDesktop.Helpers
             }
 
             Int64 WeChatMail = (Int64)WeChatMsgScan.WeChatWinBaseAddress + SupportList[3];
-            string Mail = WeChatMsgScan.GetMail(WeChatProcess.Handle, (IntPtr)WeChatMail);
+            string Mail = WeChatMsgScan.GetMail(WeChatProcess, (IntPtr)WeChatMail);
             log.Info($"weixin mail is {Mail}");
             if (!string.IsNullOrWhiteSpace(Mail) != false)
             {
@@ -111,10 +113,10 @@ namespace CBakWeChatDesktop.Helpers
             return WeChatMsg;
         }
         
-        private static string GetName(IntPtr hProcess, IntPtr lpBaseAddress, int nSize = 100)
+        public static string GetName(Process p, IntPtr lpBaseAddress, int nSize = 100)
         {
             byte[] array = new byte[nSize];
-            if (WeChatMsgScan.ReadProcessMemory(hProcess, lpBaseAddress, array, nSize, 0) == 0)
+            if (WeChatMsgScan.ReadProcessMemory(p.Handle, lpBaseAddress, array, nSize, 0) == 0)
             {
                 return "";
             }
@@ -129,10 +131,10 @@ namespace CBakWeChatDesktop.Helpers
             }
             return text;
         }
-        private static string GetAccount(IntPtr hProcess, IntPtr lpBaseAddress, int nSize = 100)
+        public static string GetAccount(Process p, IntPtr lpBaseAddress, int nSize = 100)
         {
             byte[] array = new byte[nSize];
-            if (WeChatMsgScan.ReadProcessMemory(hProcess, lpBaseAddress, array, nSize, 0) == 0)
+            if (WeChatMsgScan.ReadProcessMemory(p.Handle, lpBaseAddress, array, nSize, 0) == 0)
             {
                 return "";
             }
@@ -147,10 +149,10 @@ namespace CBakWeChatDesktop.Helpers
             }
             return text;
         }
-        private static string GetMobile(IntPtr hProcess, IntPtr lpBaseAddress, int nSize = 100)
+        public static string GetMobile(Process p, IntPtr lpBaseAddress, int nSize = 100)
         {
             byte[] array = new byte[nSize];
-            if (WeChatMsgScan.ReadProcessMemory(hProcess, lpBaseAddress, array, nSize, 0) == 0)
+            if (WeChatMsgScan.ReadProcessMemory(p.Handle, lpBaseAddress, array, nSize, 0) == 0)
             {
                 return "";
             }
@@ -165,10 +167,10 @@ namespace CBakWeChatDesktop.Helpers
             }
             return text;
         }
-        private static string GetMail(IntPtr hProcess, IntPtr lpBaseAddress, int nSize = 100)
+        public static string GetMail(Process p, IntPtr lpBaseAddress, int nSize = 100)
         {
             byte[] array = new byte[nSize];
-            if (WeChatMsgScan.ReadProcessMemory(hProcess, lpBaseAddress, array, nSize, 0) == 0)
+            if (WeChatMsgScan.ReadProcessMemory(p.Handle, lpBaseAddress, array, nSize, 0) == 0)
             {
                 return "";
             }
@@ -183,7 +185,15 @@ namespace CBakWeChatDesktop.Helpers
             }
             return text;
         }
-        private static string GetHex(IntPtr hProcess, IntPtr lpBaseAddress)
+
+        public static string GetKey(Process p, IntPtr Base, IntPtr KeyAddr)
+        {
+            Int64 WeChatKey = (Int64)WeChatMsgScan.WeChatWinBaseAddress + KeyAddr;
+            return GetHex(p.Handle, (IntPtr)WeChatKey);
+        }
+
+
+        public static string GetHex(IntPtr hProcess, IntPtr lpBaseAddress)
         {
             byte[] array = new byte[8];
             if (WeChatMsgScan.ReadProcessMemory(hProcess, lpBaseAddress, array, 8, 0) == 0)

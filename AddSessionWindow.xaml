@@ -9,24 +9,25 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition/>
+            <RowDefinition Height="100"/>
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
-        <Button Content="添加" HorizontalAlignment="Left" Margin="444,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="40" Height="23" Click="ClickAddSession"/>
-        <Button Content="取消" HorizontalAlignment="Left" Margin="399,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="40" Height="23" Click="CloseDialog"/>
-        <Label Content="用户名：" HorizontalAlignment="Left" Margin="147,92,0,0" VerticalAlignment="Top"/>
-        <Label Content="账户名：" HorizontalAlignment="Left" Margin="147,122,0,0" VerticalAlignment="Top"/>
-        <Label Content="进   程：" HorizontalAlignment="Left" Margin="147,62,0,0" VerticalAlignment="Top"/>
-        <Label Content="Session名：" HorizontalAlignment="Left" Margin="127,223,0,0" VerticalAlignment="Top"/>
-        <Label Content="描   述：" HorizontalAlignment="Left" Margin="147,253,0,0" VerticalAlignment="Top"/>
-        <TextBlock HorizontalAlignment="Left" Margin="220,67,0,0" TextWrapping="Wrap" Text="{Binding pid}" VerticalAlignment="Top" RenderTransformOrigin="0.305,0.118" Width="178"/>
-        <TextBlock HorizontalAlignment="Left" Margin="220,97,0,0" TextWrapping="Wrap" Text="{Binding wx_name}" VerticalAlignment="Top" RenderTransformOrigin="0.305,0.118" Width="178"/>
-        <TextBlock HorizontalAlignment="Left" Margin="220,127,0,0" TextWrapping="Wrap" Text="{Binding wx_acct_name}" VerticalAlignment="Top" RenderTransformOrigin="0.305,0.118" Width="178"/>
-        <TextBox x:Name="sessionNameTextBox" HorizontalAlignment="Left" Margin="220,229,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="178" RenderTransformOrigin="-0.077,-1.209"/>
-        <TextBox x:Name="sessionDescTextBox" HorizontalAlignment="Left" Margin="220,259,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="178"/>
-        <Label Content="id：" HorizontalAlignment="Left" Margin="172,152,0,0" VerticalAlignment="Top"/>
-        <Label Content="目   录：" HorizontalAlignment="Left" Margin="146,182,0,0" VerticalAlignment="Top"/>
-        <TextBlock HorizontalAlignment="Left" Margin="220,157,0,0" TextWrapping="Wrap" Text="{Binding wx_id}" VerticalAlignment="Top" RenderTransformOrigin="0.305,0.118" Width="178"/>
-        <TextBlock HorizontalAlignment="Left" Margin="220,187,0,0" TextWrapping="Wrap" Text="{Binding dir}" VerticalAlignment="Top" RenderTransformOrigin="0.305,0.118" Width="178"/>
+        <Button Content="添加" HorizontalAlignment="Left" Margin="444,0,0,0" Grid.Row="2" VerticalAlignment="Center" Width="40" Height="23" Click="ClickAddSession"/>
+        <Button Content="取消" HorizontalAlignment="Left" Margin="399,0,0,0" Grid.Row="2" VerticalAlignment="Center" Width="40" Height="23" Click="CloseDialog"/>
+        <Label Content="Session名：" HorizontalAlignment="Left" Margin="130,23,0,0" VerticalAlignment="Top" Grid.Row="1"/>
+        <Label Content="描   述：" HorizontalAlignment="Left" Margin="150,53,0,0" VerticalAlignment="Top" Grid.Row="1"/>
+        <TextBox x:Name="sessionNameTextBox" Text="{Binding SessionName}" HorizontalAlignment="Left" Margin="223,29,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="178" RenderTransformOrigin="-0.077,-1.209" Grid.Row="1"/>
+        <TextBox x:Name="sessionDescTextBox" Text="{Binding SessionDesc}" HorizontalAlignment="Left" Margin="223,59,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="178" Grid.Row="1"/>
+        <ListView ItemsSource="{Binding Processes}" SelectedItem="{Binding SelectedProcess}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="进程名" Width="120" DisplayMemberBinding="{Binding ProcessName}" />
+                    <GridViewColumn Header="PID" Width="80" DisplayMemberBinding="{Binding ProcessId}" />
+                    <GridViewColumn Header="路径" Width="430" DisplayMemberBinding="{Binding HandleName}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <Label Content="{Binding EventDesc}" HorizontalAlignment="Left" Margin="30,11,0,0" Grid.Row="2" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>
