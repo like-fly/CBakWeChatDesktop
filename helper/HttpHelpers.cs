@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
+using System.IO;
+using System.Collections;
+using System.Reflection.Metadata;
 
 namespace CBakWeChatDesktop.Helpers
 {
@@ -42,7 +45,7 @@ namespace CBakWeChatDesktop.Helpers
         }
 
         // 发送 POST 请求
-        public static async Task<string> PostAsync(string path, object data)
+        public static async Task<string> PostAsync(string path, object data = null)
         {
             var token = GetToken();
             if (token != null)
@@ -50,7 +53,11 @@ namespace CBakWeChatDesktop.Helpers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
 
-            string json = JsonConvert.SerializeObject(data);
+            string json = "";
+            if (data != null)
+            {
+                json = JsonConvert.SerializeObject(data);
+            }
             HttpContent content = new StringContent(json);
             content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
             
@@ -68,6 +75,30 @@ namespace CBakWeChatDesktop.Helpers
             return await response.Content.ReadAsStringAsync();
         }
 
+
+        public static async Task<string> UploadFile(string path, string filePath, Dictionary<string, string> data = null)
+        {
+            var token = GetToken();
+            if (token != null)
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+            var form = new MultipartFormDataContent();
+            var fileContent = new StreamContent(File.OpenRead(filePath));
+            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data");
+            var fileName = Path.GetFileName(filePath);
+            form.Add(fileContent, "file", fileName);
+            if (data != null)
+            {
+                foreach (KeyValuePair<string, string> kvp in data)
+                {
+                    form.Add(new StringContent(kvp.Value), kvp.Key);
+                }
+            }
+            HttpResponseMessage response = await client.PostAsync(GetServer() + path, form);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
 
 
     }

@@ -13,12 +13,12 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using CBakWeChatDesktop.helper.form;
 using Newtonsoft.Json.Linq;
 using log4net;
 using CBakWeChatDesktop.Model;
 using CBakWeChatDesktop.ViewModel;
 using System.Diagnostics;
+using Newtonsoft.Json;
 
 namespace CBakWeChatDesktop
 {
@@ -28,9 +28,9 @@ namespace CBakWeChatDesktop
     public partial class AddSessionWindow : Window
     {
         private MainWindow mainWindow;
-        
+
         private AddSessionViewModel ViewModel = new AddSessionViewModel();
-        public AddSessionWindow(MainWindow mainWindow, WeChatMsg weChatMsg)
+        public AddSessionWindow(MainWindow mainWindow)
         {
             InitializeComponent();
             this.mainWindow = mainWindow;
@@ -79,24 +79,24 @@ namespace CBakWeChatDesktop
         {
             if (ViewModel.SelectedProcess == null)
             {
-                MessageBox.Show("请选择进程", "错误");
+                ShowError("请选择进程");
                 return;
             }
             if (string.IsNullOrEmpty(ViewModel.SessionName))
             {
-                MessageBox.Show("请输入session名", "错误");
+                ShowError("请输入session名");
                 return;
             }
 
             Process[] ProcessList = Process.GetProcessesByName("WeChat");
             if (ProcessList.Length == 0)
             {
-                MessageBox.Show("没有找到微信进程", "错误");
+                ShowError("没有找到微信进程");
                 return;
             }
             if (ProcessList.Length > 1)
             {
-                MessageBox.Show("无法处理多个微信进程", "错误");
+                ShowError("无法处理多个微信进程");
                 return;
             }
 
@@ -123,12 +123,12 @@ namespace CBakWeChatDesktop
             }
             if (string.IsNullOrEmpty(FileVersion))
             {
-                MessageBox.Show("微信版本号获取失败");
+                ShowError("微信版本号获取失败");
                 return;
             }
             if (WeChatWinBaseAddress == 0)
             {
-                MessageBox.Show("微信基址获取失败");
+                ShowError("微信基址获取失败");
                 return;
             }
 
@@ -137,28 +137,35 @@ namespace CBakWeChatDesktop
 
             if (AddrInfo == null)
             {
-                MessageBox.Show("不支持的版本号：" + FileVersion);
+                ShowError($"不支持的版本号: {FileVersion}");
                 return;
             }
 
-
-
+            Session Session = RedProcess(WeChatProcess, WeChatWinBaseAddress, AddrInfo);
+            Session.wx_id = GetWxId(ViewModel.SelectedProcess);
+            Session.wx_dir = GetWxDir(ViewModel.SelectedProcess);
+            MessageBox.Show($"key: {Session.wx_key}, wx_name: {Session.wx_name}, wx_acct_name: {Session.wx_acct_name}, wx_mobile: {Session.wx_mobile}, name: {Session.name}, desc: {Session.desc}");
+            if (string.IsNullOrEmpty(Session.wx_key))
+            {
+                ShowError("获取微信 key 失败");
+                return;
+            }
             try
             {
-                
-                JObject response = await ApiHelpers.AddSession(ViewModel.Session);
+
+                JObject response = await ApiHelpers.AddSession(Session);
                 var id = response["id"];
                 if (id != null)
                 {
-                    ViewModel.Session.id = (int)id;
+                    Session.id = (int)id;
                     // 添加到 Main 中显示
-                    mainWindow.SessionAdd(ViewModel.Session);
+                    mainWindow.SessionAdd(Session);
                     this.Close();
                 } else
                 {
-                    MessageBox.Show("错误，session id 不存在");
+                    ShowError($"服务端返回的数据异常， sesison id 不存在: {id}");
                 }
-                
+
             } catch (Exception ex)
             {
                 var serverError = ex.Data["ResponseBody"];
@@ -180,11 +187,38 @@ namespace CBakWeChatDesktop
                     MessageBox.Show($"添加失败: {ex.Message}", "添加 session 失败");
                 }
             }
-            
+
+        }
+
+        private string GetWxId(ProcessInfo processInfo)
+        {
+            string[] dirs = processInfo.HandleName.Split("\\");
+            return dirs[dirs.Length - 3];
+        }
+
+        private string GetWxDir(ProcessInfo processInfo)
+        {
+            string db = processInfo.HandleName;
+            return db.Replace("Msg\\Applet.db", "");
         }
 
         private AddrInfo GetVersionInfo(string version)
         {
+            string filePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "version.json");
+            string jsonString = File.ReadAllText(filePath);
+            var jsonData = JsonConvert.DeserializeObject<Dictionary<string, List<int>>>(jsonString);
+            if (jsonData != null && jsonData.TryGetValue(version, out var item))
+            {
+                AddrInfo info = new AddrInfo
+                {
+                    key = item.Count > 4 ? item[4] : 0,
+                    name = item.Count > 0 ? item[0] : 0,
+                    acctname = item.Count > 1 ? item[1] : 0,
+                    mobile = item.Count > 2 ? item[2] : 0
+                };
+                return info;
+            }
+
             return null;
         }
 
@@ -192,8 +226,27 @@ namespace CBakWeChatDesktop
         {
             var session = new Session();
             string Key = WeChatMsgScan.GetKey(p, Base, info.key);
-            //string Name = WeChatMsgScan.GetNam
+            var Name = WeChatMsgScan.GetName(p, Base, info.name);
+            var Acctname = WeChatMsgScan.GetMobile(p, Base, info.acctname);
+            var Mobile = WeChatMsgScan.GetMobile(p, Base, info.mobile);
+
+            session.wx_key = Key;
+            session.wx_name = Name;
+            session.wx_acct_name = Acctname;
+            session.wx_mobile = Mobile;
+            session.name = ViewModel.SessionName;
+            session.desc = ViewModel.SessionDesc;
             return session;
+        }
+        private void ShowError(string msg)
+        {
+            MessageBox.Show(msg);
+            ViewModel.EventDesc = string.Empty;
+        }
+
+        private void ShowProgress(string msg)
+        {
+            ViewModel.EventDesc = msg;
         }
     }
 

@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using System.Security.Policy;
 using CBakWeChatDesktop.Model;
+using Newtonsoft.Json;
 
 namespace CBakWeChatDesktop.Helpers
 {
@@ -31,6 +32,34 @@ namespace CBakWeChatDesktop.Helpers
             string response = await HttpHelper.PostAsync(url, session);
             return JObject.Parse(response);
         }
+
+        public static async Task<List<Session>> LoadSession()
+        {
+            string url = "/api/user/sys-sessions";
+            string response = await HttpHelper.GetAsync(url);
+            if (string.IsNullOrEmpty(response))
+            {
+                return null;
+            }
+            return JsonConvert.DeserializeObject<List<Session>>(response);
+        }
+
+        public static async Task<string> UploadSingle(string FilePath, Session Session)
+        {
+            string url = "/api/wx/upload-single/";
+            Dictionary<string, string> data = new Dictionary<string, string>();
+            data.Add("file_path", FilePath.Replace(Session.wx_dir, ""));
+            data.Add("sys_session_id", Session.id.ToString());
+            data.Add("wx_id", Session.wx_id);
+            return await HttpHelper.UploadFile(url, FilePath, data);
+        }
+
+        public static async Task<string> Decrypt(int Id)
+        {
+            string url = "/api/wx/do-decrypt/" + Id;
+            return await HttpHelper.PostAsync(url);
+        }
+
 
     }
 }

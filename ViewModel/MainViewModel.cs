@@ -17,5 +17,9 @@ namespace CBakWeChatDesktop.ViewModel
         // 当前展示 session
         [ObservableProperty]
         private Session? session = null;
+        [ObservableProperty]
+        private string eventDesc = string.Empty;
+        [ObservableProperty]
+        private string eventTitle = string.Empty;
     }
 }
