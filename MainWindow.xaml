@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:CBakWeChatDesktop"
-        Title="Student App" Height="450" Width="800">
+        Title="CBakWeChatDesktop" Height="450" Width="800">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"/>
@@ -10,13 +10,13 @@
         </Grid.ColumnDefinitions>
 
         <!-- 右侧内容区域 -->
-        <Grid Grid.Column="1" Visibility="{Binding Session, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Collapsed}">
+        <Grid Grid.Column="1" Visibility="{Binding Session, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Collapsed}" Margin="30,0,0,0">
             <Grid.RowDefinitions>
                 <RowDefinition/>
                 <RowDefinition Height="50"/>
                 <RowDefinition Height="50"/>
             </Grid.RowDefinitions>
-            <StackPanel Grid.Row="0">
+            <StackPanel Grid.Row="0" Margin="0,14,0,0">
                 <TextBlock Text="Session Name:" FontWeight="Bold"/>
                 <TextBlock x:Name="SessionName" Text="{Binding Session.name}"/>
 
@@ -28,13 +28,18 @@
 
                 <TextBlock Text="Wx Acct Name:" FontWeight="Bold" Margin="0,10,0,0"/>
                 <TextBlock x:Name="WxAcctName" Text="{Binding Session.wx_acct_name}"/>
-                <Grid Height="100"/>
+                <Grid Height="100">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="83*"/>
+                        <ColumnDefinition Width="67*"/>
+                    </Grid.ColumnDefinitions>
+                </Grid>
             </StackPanel>
             <StackPanel Grid.Row="1" Margin="0,0,0,50" Grid.RowSpan="2">
                 <TextBlock TextWrapping="Wrap" Text="{Binding EventTitle}"/>
                 <TextBlock TextWrapping="Wrap" Text="{Binding EventDesc}"/>
             </StackPanel>
-            <Button Content="同步" HorizontalAlignment="Left" Margin="526,0,0,0" Grid.Row="2" VerticalAlignment="Center" Width="40" Height="23" Click="SyncClick"/>
+            <Button Content="同步" HorizontalAlignment="Left" Grid.Row="2" VerticalAlignment="Center" Width="40" Height="23" Click="SyncClick" Margin="510,0,0,0"/>
         </Grid>
         <Grid Grid.Column="0">
             <Grid.RowDefinitions>

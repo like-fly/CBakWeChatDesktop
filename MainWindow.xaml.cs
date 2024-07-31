@@ -11,6 +11,8 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using CBakWeChatDesktop.Model;
 using System.IO;
+using System.Windows.Documents;
+using CBakWeChatDesktop.helper;
 
 namespace CBakWeChatDesktop
 {
@@ -99,30 +101,63 @@ namespace CBakWeChatDesktop
                 return;
             }
             SetEvent("开始同步数据...");
-            await TraverseDirectory(this.viewModel.Session.wx_dir);
+            UploadContext uploadContext = new UploadContext();
+            uploadContext.Ignore = UploadHelper.IgnorePath();
+            uploadContext.ForceTypes = UploadHelper.ForceTypes();
+            uploadContext.FileHashSet = UploadHelper.LoadUploadedFileHashes();
+            uploadContext.NewFileHashSet = new HashSet<string>();
+            uploadContext.Path = this.viewModel.Session.wx_dir;
+            await TraverseDirectory(uploadContext);
             SetEvent("数据同步完成", "");
             await ApiHelpers.Decrypt(this.viewModel.Session.id);
+            UploadHelper.SaveHashToFile(uploadContext.NewFileHashSet);
             SetDesc("服务器正在解析数据，稍后在网页端查看结果...");
         }
 
-        private async Task TraverseDirectory(string path)
+
+        private async Task TraverseDirectory(UploadContext context)
         {
             try
             {
                 // 处理当前目录中的所有文件
-                foreach (string file in Directory.GetFiles(path))
+                foreach (string file in Directory.GetFiles(context.Path))
                 {
-                    SetDesc(file);
-                    if (this.viewModel.Session != null)
+                    bool neetUpload = false;
+                    var fileHash = UploadHelper.ComputeFileHash(file);
+                    bool force = UploadHelper.IsForce(file, context.ForceTypes);
+                    if (force)
                     {
-                        string resp = await ApiHelpers.UploadSingle(file, this.viewModel.Session);
+                        neetUpload = true;
+                    } 
+                    else
+                    {
+                        // 判断是否已经上传
+                        if (!context.FileHashSet.Contains(fileHash))
+                        {
+                            neetUpload = true;
+                        }
+                    }
+                    
+                    if (neetUpload)
+                    {
+                        SetDesc(file);
+                        if (this.viewModel.Session != null)
+                        {
+                            string resp = await ApiHelpers.UploadSingle(file, this.viewModel.Session);
+                            if (!force)
+                            {
+                                context.NewFileHashSet.Add(fileHash);
+                            }
+                        }
                     }
                 }
 
                 // 递归处理所有子目录
-                foreach (string directory in Directory.GetDirectories(path))
+                foreach (string directory in Directory.GetDirectories(context.Path))
                 {
-                    await TraverseDirectory(directory);
+                    if (UploadHelper.IsIgnore(directory, context.Ignore)) {  continue; }
+                    context.Path = directory;
+                    await TraverseDirectory(context);
                 }
             }
             catch (UnauthorizedAccessException e)
@@ -157,6 +192,15 @@ namespace CBakWeChatDesktop
             this.viewModel.EventDesc = desc;
         }
        
+    }
+
+    public class UploadContext
+    {
+        public string Path { get; set; }
+        public List<string> Ignore { get; set; }
+        public List<string> ForceTypes { get; set; }
+        public HashSet<string> FileHashSet { get; set; }
+        public HashSet<string> NewFileHashSet { get; set; }
     }
 
 
