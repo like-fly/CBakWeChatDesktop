@@ -144,7 +144,6 @@ namespace CBakWeChatDesktop
             Session Session = RedProcess(WeChatProcess, WeChatWinBaseAddress, AddrInfo);
             Session.wx_id = GetWxId(ViewModel.SelectedProcess);
             Session.wx_dir = GetWxDir(ViewModel.SelectedProcess);
-            MessageBox.Show($"key: {Session.wx_key}, wx_name: {Session.wx_name}, wx_acct_name: {Session.wx_acct_name}, wx_mobile: {Session.wx_mobile}, name: {Session.name}, desc: {Session.desc}");
             if (string.IsNullOrEmpty(Session.wx_key))
             {
                 ShowError("获取微信 key 失败");

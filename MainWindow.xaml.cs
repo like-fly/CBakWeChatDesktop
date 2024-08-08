@@ -104,13 +104,13 @@ namespace CBakWeChatDesktop
             UploadContext uploadContext = new UploadContext();
             uploadContext.Ignore = UploadHelper.IgnorePath();
             uploadContext.ForceTypes = UploadHelper.ForceTypes();
-            uploadContext.FileHashSet = UploadHelper.LoadUploadedFileHashes();
+            uploadContext.FileHashSet = UploadHelper.LoadUploadedFileHashes(this.viewModel.Session.id);
             uploadContext.NewFileHashSet = new HashSet<string>();
             uploadContext.Path = this.viewModel.Session.wx_dir;
             await TraverseDirectory(uploadContext);
             SetEvent("数据同步完成", "");
             await ApiHelpers.Decrypt(this.viewModel.Session.id);
-            UploadHelper.SaveHashToFile(uploadContext.NewFileHashSet);
+            UploadHelper.SaveHashToFile(uploadContext.NewFileHashSet, this.viewModel.Session.id);
             SetDesc("服务器正在解析数据，稍后在网页端查看结果...");
         }
 

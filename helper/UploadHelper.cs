@@ -15,6 +15,7 @@ namespace CBakWeChatDesktop.helper
         private static readonly string IGNORE_FILE = "ignore.txt";
         private static readonly string FORCE_FILE = "force.txt";
         private static readonly string HASH_FILE = "uploaded_files.txt";
+        private static readonly string HASH_FOLDER = "hash";
 
         public static List<string> IgnorePath()
         {
@@ -70,13 +71,14 @@ namespace CBakWeChatDesktop.helper
             }
         }
 
-        public static HashSet<string> LoadUploadedFileHashes()
+        public static HashSet<string> LoadUploadedFileHashes(int session_id)
         {
+            string HashFile = GetHashFilePath(session_id);
             HashSet<string> hashs = new HashSet<string>();
-            if (File.Exists(HASH_FILE))
+            if (File.Exists(HashFile))
             {
 
-                foreach (var line in File.ReadAllLines(HASH_FILE))
+                foreach (var line in File.ReadAllLines(HashFile))
                 {
                     hashs.Add(line);
                 }
@@ -84,13 +86,24 @@ namespace CBakWeChatDesktop.helper
             return hashs;
         }
 
-        public static void SaveHashToFile(HashSet<string> newFileHashSet)
+        public static void SaveHashToFile(HashSet<string> newFileHashSet, int session_id)
         {
+            string HashFile = GetHashFilePath(session_id);
             if (newFileHashSet != null && newFileHashSet.Count > 0)
             {
-                File.AppendAllLines(HASH_FILE, newFileHashSet);
+                File.AppendAllLines(HashFile, newFileHashSet);
             }
 
+        }
+
+        public static string GetHashFilePath(int session_id)
+        {
+           
+            if (!Directory.Exists(HASH_FOLDER))
+            {
+                Directory.CreateDirectory(HASH_FOLDER);
+            }
+            return HASH_FOLDER + "/" + session_id + ".txt";
         }
 
     }

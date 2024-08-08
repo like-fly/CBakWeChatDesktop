@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <SignAssembly>False</SignAssembly>
+    <Platforms>AnyCPU;x64</Platforms>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>

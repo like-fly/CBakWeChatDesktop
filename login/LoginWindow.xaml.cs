@@ -36,7 +36,6 @@ namespace CBakWeChatDesktop.login
             
             f.server = "http://127.0.0.1:8000";
             f.username = "admin";
-            f.password = "secret";
             DataContext = f;
         }
 
@@ -45,7 +44,7 @@ namespace CBakWeChatDesktop.login
             var loginData = new Dictionary<string, string>
             {
                 { "username", f.username },
-                { "password", f.password }
+                { "password", this.passwordBox.Password }
             };
             try
             {

@@ -23,7 +23,7 @@
         <Label Content="密码：" HorizontalAlignment="Left" Margin="89,123,0,0" Grid.Row="1" VerticalAlignment="Top"/>
         <TextBox x:Name="serverTextBox" HorizontalAlignment="Left" Margin="168,23,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Top" Width="184" Text="{Binding server}"/>
         <TextBox x:Name="usernameTextBox" HorizontalAlignment="Left" Margin="168,71,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Top" Width="184" Text="{Binding username}"/>
-        <TextBox x:Name="passwordTextBox" HorizontalAlignment="Left" Margin="168,128,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Top" Width="184" Text="{Binding password}"/>
+        <PasswordBox x:Name="passwordBox" HorizontalAlignment="Left" Margin="168,128,0,0" Grid.Row="1" VerticalAlignment="Top" Width="184"/>
         <Button Content="登 录" Margin="288,0,48,0" Grid.Row="2" VerticalAlignment="Center" RenderTransformOrigin="-6.82,0.632" Height="30" Click="Button_Click"/>
 
     </Grid>
