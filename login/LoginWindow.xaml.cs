@@ -15,7 +15,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using log4net;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CBakWeChatDesktop.login
 {
@@ -24,7 +24,7 @@ namespace CBakWeChatDesktop.login
     /// </summary>
     public partial class LoginWindow : Window
     {
-        private static readonly ILog log = LogManager.GetLogger(typeof(LoginWindow));
+        public static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(LoginWindow));
 
         LoginForm f = new LoginForm();
 
@@ -34,7 +34,7 @@ namespace CBakWeChatDesktop.login
         {
             InitializeComponent();
             
-            f.server = "http://127.0.0.1:8000";
+            f.server = "http://127.0.0.1:9527";
             f.username = "admin";
             DataContext = f;
         }
@@ -46,10 +46,12 @@ namespace CBakWeChatDesktop.login
                 { "username", f.username },
                 { "password", this.passwordBox.Password }
             };
+            log.Info($"登录，用户名{f.username}");
             try
             {
                 JObject response = await ApiHelpers.Login(f.server, loginData);
                 string token = response["access_token"].ToString();
+                log.Info("登录成功");
 
                 // 设置 token，server
                 Properties.Settings.Default.token = token;

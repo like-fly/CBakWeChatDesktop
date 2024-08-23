@@ -27,6 +27,7 @@ namespace CBakWeChatDesktop
     /// </summary>
     public partial class AddSessionWindow : Window
     {
+        public static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(AddSessionWindow));
         private MainWindow mainWindow;
 
         private AddSessionViewModel ViewModel = new AddSessionViewModel();
@@ -41,31 +42,40 @@ namespace CBakWeChatDesktop
 
         private void LoadProcesses()
         {
-            Process[] processes = Process.GetProcessesByName("wechat");
-            foreach (Process p in processes)
+            try
             {
-                var lHandles = NativeAPIHelper.GetHandleInfoForPID((uint)p.Id);
-                foreach (var h in lHandles)
+                Process[] processes = Process.GetProcessesByName("wechat");
+                foreach (Process p in processes)
                 {
-                    string name = NativeAPIHelper.FindHandleName(h, p);
-                    if (name != "")
+                    var lHandles = NativeAPIHelper.GetHandleInfoForPID((uint)p.Id);
+                    foreach (var h in lHandles)
                     {
-                        // 预留handle log
-                        if (File.Exists("handle.log"))
+                        string name = NativeAPIHelper.FindHandleName(h, p);
+                        if (name != "")
                         {
-                            File.AppendAllText("handle.log", string.Format("{0}|{1}|{2}|{3}\n", p.Id, h.ObjectTypeIndex, h.HandleValue, name));
-                        }
-                        if (name.EndsWith("Applet.db"))
-                        {
-                            ProcessInfo info = new ProcessInfo();
-                            info.ProcessId = p.Id.ToString();
-                            info.ProcessName = p.ProcessName;
-                            info.HandleName = DevicePathMapper.FromDevicePath(name);
-                            ViewModel.Processes.Add(info);
+                            // 预留handle log
+                            if (File.Exists("handle.log"))
+                            {
+                                File.AppendAllText("handle.log", string.Format("{0}|{1}|{2}|{3}\n", p.Id, h.ObjectTypeIndex, h.HandleValue, name));
+                            }
+                            if (name.EndsWith("Applet.db"))
+                            {
+                                ProcessInfo info = new ProcessInfo();
+                                info.ProcessId = p.Id.ToString();
+                                info.ProcessName = p.ProcessName;
+                                info.HandleName = DevicePathMapper.FromDevicePath(name);
+                                ViewModel.Processes.Add(info);
+                            }
                         }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                log.Error("获取WX进程错误", ex);
+                MessageBox.Show("获取 wx 进程错误： " + ex.Message);
+            }
+            
         }
 
 
@@ -104,23 +114,32 @@ namespace CBakWeChatDesktop
 
             nint WeChatWinBaseAddress = 0;
             string FileVersion = null;
-            foreach (object obj in WeChatProcess.Modules)
+            try
             {
-                ProcessModule processModule = (ProcessModule)obj;
-                string processModuleName = processModule.ModuleName;
-                if (processModule.ModuleName == "WeChatWin.dll")
+                foreach (object obj in WeChatProcess.Modules)
                 {
-                    var FileVersionInfo = processModule.FileVersionInfo;
-                    if (FileVersionInfo != null)
+                    ProcessModule processModule = (ProcessModule)obj;
+                    string processModuleName = processModule.ModuleName;
+                    if (processModule.ModuleName == "WeChatWin.dll")
                     {
-                        // 版本号
-                        FileVersion = FileVersionInfo.FileVersion;
+                        var FileVersionInfo = processModule.FileVersionInfo;
+                        if (FileVersionInfo != null)
+                        {
+                            // 版本号
+                            FileVersion = FileVersionInfo.FileVersion;
+                        }
+                        // 基址
+                        WeChatWinBaseAddress = processModule.BaseAddress;
+                        break;
                     }
-                    // 基址
-                    WeChatWinBaseAddress = processModule.BaseAddress;
-                    break;
                 }
+            } catch (Exception ex)
+            {
+                log.Error("获取 wx 版本号和基址错误", ex);
+                ShowError("获取 wx 版本号和基址错误：" + ex.Message);
+                return;
             }
+            
             if (string.IsNullOrEmpty(FileVersion))
             {
                 ShowError("微信版本号获取失败");
@@ -133,7 +152,17 @@ namespace CBakWeChatDesktop
             }
 
             // 获取版本号对应的地址偏移量数据
-            AddrInfo AddrInfo = GetVersionInfo(FileVersion);
+            AddrInfo AddrInfo = null;
+            try
+            {
+                AddrInfo = GetVersionInfo(FileVersion);
+            }
+            catch (Exception ex) {
+                log.Error("获取 wx 偏移地址错误", ex);
+                ShowError("获取 wx 偏移地址错：" + ex.Message);
+                return;
+            }
+            
 
             if (AddrInfo == null)
             {
@@ -167,6 +196,7 @@ namespace CBakWeChatDesktop
 
             } catch (Exception ex)
             {
+                log.Error("添加 session 异常", ex);
                 var serverError = ex.Data["ResponseBody"];
                 if (serverError != null)
                 {

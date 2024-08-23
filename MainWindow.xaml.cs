@@ -18,6 +18,7 @@ namespace CBakWeChatDesktop
 {
     public partial class MainWindow : Window
     {
+        public static readonly log4net.ILog log = log4net.LogManager.GetLogger(typeof(MainWindow));
         MainViewModel viewModel = new MainViewModel();
 
         public MainWindow()
@@ -101,72 +102,78 @@ namespace CBakWeChatDesktop
                 return;
             }
             SetEvent("开始同步数据...");
-            UploadContext uploadContext = new UploadContext();
-            uploadContext.Ignore = UploadHelper.IgnorePath();
-            uploadContext.ForceTypes = UploadHelper.ForceTypes();
-            uploadContext.FileHashSet = UploadHelper.LoadUploadedFileHashes(this.viewModel.Session.id);
-            uploadContext.NewFileHashSet = new HashSet<string>();
-            uploadContext.Path = this.viewModel.Session.wx_dir;
-            await TraverseDirectory(uploadContext);
-            SetEvent("数据同步完成", "");
-            await ApiHelpers.Decrypt(this.viewModel.Session.id);
-            UploadHelper.SaveHashToFile(uploadContext.NewFileHashSet, this.viewModel.Session.id);
-            SetDesc("服务器正在解析数据，稍后在网页端查看结果...");
+            try
+            {
+                UploadContext uploadContext = new UploadContext();
+                uploadContext.Ignore = UploadHelper.IgnorePath();
+                uploadContext.ForceTypes = UploadHelper.ForceTypes();
+                uploadContext.FileHashSet = UploadHelper.LoadUploadedFileHashes(this.viewModel.Session.id);
+                uploadContext.NewFileHashSet = new HashSet<string>();
+                uploadContext.Path = this.viewModel.Session.wx_dir;
+                try
+                {
+                    await TraverseDirectory(uploadContext);
+                }
+                catch (Exception ex)
+                {
+                    log.Error("数据同步异常", ex);
+                    SetEvent("数据同步异常：" + ex.Message, "");
+                    return;
+                }
+                SetEvent("数据同步完成", "");
+                await ApiHelpers.Decrypt(this.viewModel.Session.id);
+                UploadHelper.SaveHashToFile(uploadContext.NewFileHashSet, this.viewModel.Session.id);
+                SetDesc("服务器正在解析数据，稍后在网页端查看结果...");
+            }
+            catch (Exception ex) 
+            {
+                log.Error("数据同步异常", ex);
+            }
+            
         }
 
 
         private async Task TraverseDirectory(UploadContext context)
         {
-            try
+            // 处理当前目录中的所有文件
+            foreach (string file in Directory.GetFiles(context.Path))
             {
-                // 处理当前目录中的所有文件
-                foreach (string file in Directory.GetFiles(context.Path))
+                bool neetUpload = false;
+                var fileHash = UploadHelper.ComputeFileHash(file);
+                bool force = UploadHelper.IsForce(file, context.ForceTypes);
+                if (force)
                 {
-                    bool neetUpload = false;
-                    var fileHash = UploadHelper.ComputeFileHash(file);
-                    bool force = UploadHelper.IsForce(file, context.ForceTypes);
-                    if (force)
+                    neetUpload = true;
+                }
+                else
+                {
+                    // 判断是否已经上传
+                    if (!context.FileHashSet.Contains(fileHash))
                     {
                         neetUpload = true;
-                    } 
-                    else
-                    {
-                        // 判断是否已经上传
-                        if (!context.FileHashSet.Contains(fileHash))
-                        {
-                            neetUpload = true;
-                        }
-                    }
-                    
-                    if (neetUpload)
-                    {
-                        SetDesc(file);
-                        if (this.viewModel.Session != null)
-                        {
-                            string resp = await ApiHelpers.UploadSingle(file, this.viewModel.Session);
-                            if (!force)
-                            {
-                                context.NewFileHashSet.Add(fileHash);
-                            }
-                        }
                     }
                 }
 
-                // 递归处理所有子目录
-                foreach (string directory in Directory.GetDirectories(context.Path))
+                if (neetUpload)
                 {
-                    if (UploadHelper.IsIgnore(directory, context.Ignore)) {  continue; }
-                    context.Path = directory;
-                    await TraverseDirectory(context);
+                    SetDesc(file);
+                    if (this.viewModel.Session != null)
+                    {
+                        string resp = await ApiHelpers.UploadSingle(file, this.viewModel.Session);
+                        if (!force)
+                        {
+                            context.NewFileHashSet.Add(fileHash);
+                        }
+                    }
                 }
             }
-            catch (UnauthorizedAccessException e)
+
+            // 递归处理所有子目录
+            foreach (string directory in Directory.GetDirectories(context.Path))
             {
-                MessageBox.Show(e.Message);
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.Message);
+                if (UploadHelper.IsIgnore(directory, context.Ignore)) { continue; }
+                context.Path = directory;
+                await TraverseDirectory(context);
             }
         }
 
