@@ -48,9 +48,9 @@
             </Grid.RowDefinitions>
             <!-- 左侧列表 -->
             <ListBox Grid.Row="0" x:Name="SessionList" DisplayMemberPath="name" 
-                SelectionChanged="SessionList_SelectionChanged" />
-            <Button Content="添加 Session" HorizontalAlignment="Left" Grid.Row="1" VerticalAlignment="Center" RenderTransformOrigin="1.525,-0.489" Width="90" Height="23" Click="SessionAddClick" Margin="100,0,0,0"/>
-            <Button Content="退出" HorizontalAlignment="Left" Grid.Row="1" VerticalAlignment="Center" RenderTransformOrigin="1.525,-0.489" Width="64" Height="23" Click="Logout" Margin="10,0,0,0"/>
+                SelectionChanged="SessionList_SelectionChanged" Height="385" Grid.RowSpan="2" VerticalAlignment="Top" />
+            <Button Content="添加 Session" HorizontalAlignment="Left" Grid.Row="1" VerticalAlignment="Top" RenderTransformOrigin="1.525,-0.489" Width="90" Height="23" Click="SessionAddClick" Margin="100,17,0,0"/>
+            <Button Content="退出" HorizontalAlignment="Left" Grid.Row="1" VerticalAlignment="Top" RenderTransformOrigin="1.525,-0.489" Width="64" Height="23" Click="Logout" Margin="10,17,0,0"/>
         </Grid>
     </Grid>
 </Window>

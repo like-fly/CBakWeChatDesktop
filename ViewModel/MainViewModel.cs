@@ -21,5 +21,7 @@ namespace CBakWeChatDesktop.ViewModel
         private string eventDesc = string.Empty;
         [ObservableProperty]
         private string eventTitle = string.Empty;
+        [ObservableProperty]
+        private string version = string.Empty;
     }
 }

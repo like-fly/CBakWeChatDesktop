@@ -15,6 +15,15 @@ namespace CBakWeChatDesktop.Helpers
     public class HttpHelper
     {
         private static readonly HttpClient client = new HttpClient(new CustomHttpClientHandler());
+        private static readonly HttpClient uploadClient;
+
+        static HttpHelper()
+        {
+            uploadClient = new HttpClient(new CustomHttpClientHandler())
+            {
+                Timeout = TimeSpan.FromSeconds(1200) // 设置为 1200 秒 (20分钟)
+            };
+        }
 
         // 设置 token
 
@@ -95,7 +104,7 @@ namespace CBakWeChatDesktop.Helpers
                     form.Add(new StringContent(kvp.Value), kvp.Key);
                 }
             }
-            HttpResponseMessage response = await client.PostAsync(GetServer() + path, form);
+            HttpResponseMessage response = await uploadClient.PostAsync(GetServer() + path, form);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();
         }

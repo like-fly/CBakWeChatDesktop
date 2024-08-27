@@ -71,6 +71,16 @@ namespace CBakWeChatDesktop.helper
             }
         }
 
+        public static async Task<string> ComputeFileHashAsync(string filePath)
+        {
+            using (var md5 = MD5.Create())
+            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true))
+            {
+                byte[] hash = await md5.ComputeHashAsync(stream);
+                return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            }
+        }
+
         public static HashSet<string> LoadUploadedFileHashes(int session_id)
         {
             string HashFile = GetHashFilePath(session_id);

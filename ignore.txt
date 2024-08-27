@@ -1,8 +1,4 @@
 ﻿Applet
-Backup
-BackupFiles
-config
-ResUpdateV2
 FileStorage\Cache
 FileStorage\MPPageFastLoad
 Msg\MMKV
