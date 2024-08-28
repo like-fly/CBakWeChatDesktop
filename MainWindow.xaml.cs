@@ -53,11 +53,30 @@ namespace CBakWeChatDesktop
             this.SessionList.ItemsSource = viewModel.Sessions;
         }
 
+        private void SetViewModelSyncTime()
+        {
+            if (this.viewModel.Session == null)
+            {
+                return;
+            }
+            if (this.viewModel.Session.create_time == this.viewModel.Session.update_time)
+            {
+                viewModel.LastSyncTime = "未同步";
+            }
+            else
+            {
+                DateTimeOffset convertedBack = DateTimeOffset.FromUnixTimeSeconds(this.viewModel.Session.update_time);
+                DateTimeOffset lastSyncTime = convertedBack.ToLocalTime();
+                viewModel.LastSyncTime = lastSyncTime.ToString();
+            }
+        }
+
         private void SessionList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SessionList.SelectedItem is Session selectedSession)
             {
                 viewModel.Session = selectedSession;
+                SetViewModelSyncTime();
             }
             else
             {
@@ -113,7 +132,31 @@ namespace CBakWeChatDesktop
                 uploadContext.ForceTypes = UploadHelper.ForceTypes();
                 uploadContext.FileHashSet = UploadHelper.LoadUploadedFileHashes(this.viewModel.Session.id);
                 uploadContext.NewFileHashSet = new HashSet<string>();
+                uploadContext.IsUploaded = false;
                 uploadContext.Path = this.viewModel.Session.wx_dir;
+                // 历史原因，使用session的 update_time作为上次同步时间
+                // 如果 create_time == update_time 则说明没有同步过
+                if (this.viewModel.Session.create_time == this.viewModel.Session.update_time)
+                {
+                    uploadContext.LastSyncTime = 0;
+                } else
+                {
+                    uploadContext.LastSyncTime = this.viewModel.Session.update_time;
+                }
+                log.Info($"上次同步时间时间戳： {uploadContext.LastSyncTime}");
+                if (uploadContext.LastSyncTime > 0)
+                {
+                    DateTimeOffset convertedBack = DateTimeOffset.FromUnixTimeSeconds(uploadContext.LastSyncTime);
+                    DateTimeOffset lastSyncTime = convertedBack.ToLocalTime();
+                    log.Info($"增量同步，上次同步时间：{lastSyncTime}");
+                } else
+                {
+                    log.Info($"未同步过数据，全量同步！");
+                }
+                // 设置开始同步时间
+                DateTimeOffset now = DateTimeOffset.Now;
+                long unixTimestamp = now.ToUnixTimeSeconds();
+                uploadContext.StartSyncTime = unixTimestamp;
 
                 // 使用 Task.Run 将耗时操作移至后台线程
                 await Task.Run(async () =>
@@ -121,15 +164,19 @@ namespace CBakWeChatDesktop
                     await TraverseDirectory(uploadContext);
                 });
 
-                SetEvent("数据同步完成", "");
-                await ApiHelpers.Decrypt(this.viewModel.Session.id);
-
-                // 保存哈希到文件也放入后台线程
-                await Task.Run(() =>
+                if (uploadContext.IsUploaded == false)
                 {
-                    UploadHelper.SaveHashToFile(uploadContext.NewFileHashSet, this.viewModel.Session.id);
-                });
+                    SetEvent("没有数据需要同步", "");
+                    return;
+                }
 
+                SetEvent("数据同步完成", "");
+                await ApiHelpers.Decrypt(this.viewModel.Session.id, uploadContext.StartSyncTime);
+
+                // 设置 session 的 update_time
+                log.Info($"设置 session 当前时间的时间戳 {uploadContext.StartSyncTime}");
+                this.viewModel.Session.update_time = uploadContext.StartSyncTime;
+                SetViewModelSyncTime();
                 SetDesc("服务器正在解析数据，稍后在网页端查看结果...");
             }
             catch (Exception ex)
@@ -144,50 +191,25 @@ namespace CBakWeChatDesktop
         {
             try
             {
+                DirectoryInfo dirInfo = new DirectoryInfo(context.Path);
                 // 处理当前目录中的所有文件
-                foreach (string file in Directory.GetFiles(context.Path))
+                foreach (var file in dirInfo.GetFiles())
                 {
-                    
-                    bool neetUpload = false;
-                    var fileHash = UploadHelper.ComputeFileHash(file);
-                    // string fileHash = await UploadHelper.ComputeFileHashAsync(file);
-                    bool force = UploadHelper.IsForce(file, context.ForceTypes);
-                    if (force)
+                    DateTime lastWriteTime = file.LastWriteTime;
+                    long unixTimestamp = ((DateTimeOffset)lastWriteTime).ToUnixTimeSeconds();
+                    if (this.viewModel.Session != null && unixTimestamp >= context.LastSyncTime)
                     {
-                        neetUpload = true;
-                    }
-                    else
-                    {
-                        // 判断是否已经上传
-                        if (!context.FileHashSet.Contains(fileHash))
-                        {
-                            neetUpload = true;
-                        }
-                    }
-                    if (neetUpload)
-                    {
-                        SetDesc(file);
-                        if (this.viewModel.Session != null)
-                        {
-                            log.Info("上传文件：" + file);
-                            string resp = await ApiHelpers.UploadSingle(file, this.viewModel.Session);
-                            if (!force)
-                            {
-                                context.NewFileHashSet.Add(fileHash);
-                            }
-                        }
+                        SetDesc($"上传文件：{file.FullName}");
+                        log.Info($"Upload File : {file.FullName} | Last Modified: {file.LastWriteTime}");
+                        await ApiHelpers.UploadSingle(file.FullName, this.viewModel.Session);
+                        context.IsUploaded = true;
                     }
                 }
 
                 // 递归处理所有子目录
-                foreach (string directory in Directory.GetDirectories(context.Path))
+                foreach (var dir in dirInfo.GetDirectories())
                 {
-                    if (UploadHelper.IsIgnore(directory, context.Ignore)) 
-                    {
-                        log.Info($"文件夹忽略：{directory}");
-                        continue; 
-                    }
-                    context.Path = directory;
+                    context.Path = dir.FullName;
                     await TraverseDirectory(context);
                 }
             }
@@ -228,6 +250,9 @@ namespace CBakWeChatDesktop
         public List<string> ForceTypes { get; set; }
         public HashSet<string> FileHashSet { get; set; }
         public HashSet<string> NewFileHashSet { get; set; }
+        public long LastSyncTime { get; set; }
+        public long StartSyncTime { get; set; }
+        public bool IsUploaded {  get; set; }
     }
 
 

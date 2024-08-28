@@ -54,9 +54,11 @@ namespace CBakWeChatDesktop.Helpers
             return await HttpHelper.UploadFile(url, FilePath, data);
         }
 
-        public static async Task<string> Decrypt(int Id)
+        public static async Task<string> Decrypt(int Id, long StartSyncTime)
         {
-            string url = "/api/wx/do-decrypt/" + Id;
+            string url = $"/api/wx/do-decrypt/{Id}";
+            Dictionary<string, string> data = new Dictionary<string, string>();
+            data.Add("update_time", StartSyncTime.ToString());
             return await HttpHelper.PostAsync(url);
         }
 

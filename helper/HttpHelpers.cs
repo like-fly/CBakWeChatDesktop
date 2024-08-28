@@ -93,7 +93,8 @@ namespace CBakWeChatDesktop.Helpers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
             var form = new MultipartFormDataContent();
-            var fileContent = new StreamContent(File.OpenRead(filePath));
+            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var fileContent = new StreamContent(fileStream);
             fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data");
             var fileName = Path.GetFileName(filePath);
             form.Add(fileContent, "file", fileName);

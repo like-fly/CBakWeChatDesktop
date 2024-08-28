@@ -20,5 +20,7 @@ namespace CBakWeChatDesktop.Model
         public string wx_dir { get; set; }
         public string pid { get; set; }
         public string dir { get; set; }
+        public long create_time { get; set; }
+        public long update_time { get; set; }
     }
 }

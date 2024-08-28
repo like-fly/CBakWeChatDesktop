@@ -23,5 +23,7 @@ namespace CBakWeChatDesktop.ViewModel
         private string eventTitle = string.Empty;
         [ObservableProperty]
         private string version = string.Empty;
+        [ObservableProperty]
+        private string lastSyncTime = string.Empty;
     }
 }
